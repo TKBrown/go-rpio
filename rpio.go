@@ -59,11 +59,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"os"
-	"reflect"
 	"sync"
-	"syscall"
 	"time"
-	"unsafe"
 )
 
 type Direction uint8
