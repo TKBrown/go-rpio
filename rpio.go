@@ -65,7 +65,6 @@ import (
 
 type Direction uint8
 type Pin uint8
-type State uint8
 type Pull uint8
 
 // Memory offsets for gpio, see the spec for more details
@@ -81,12 +80,6 @@ const (
 const (
 	Input Direction = iota
 	Output
-)
-
-// State of pin, High / Low
-const (
-	Low State = iota
-	High
 )
 
 // Pull Up / Down / Off
@@ -115,12 +108,12 @@ func (pin Pin) Output() {
 
 // Set pin High
 func (pin Pin) High() {
-	WritePin(pin, High)
+	WritePin(pin, true)
 }
 
 // Set pin Low
 func (pin Pin) Low() {
-	WritePin(pin, Low)
+	WritePin(pin, false)
 }
 
 // Toggle pin state
@@ -134,12 +127,12 @@ func (pin Pin) Mode(dir Direction) {
 }
 
 // Set pin state (high/low)
-func (pin Pin) Write(state State) {
+func (pin Pin) Write(state bool) {
 	WritePin(pin, state)
 }
 
 // Read pin state (high/low)
-func (pin Pin) Read() State {
+func (pin Pin) Read() bool {
 	return ReadPin(pin)
 }
 
@@ -183,7 +176,7 @@ func PinMode(pin Pin, direction Direction) {
 
 // WritePin sets a given pin High or Low
 // by setting the clear or set registers respectively
-func WritePin(pin Pin, state State) {
+func WritePin(pin Pin, state bool) {
 
 	p := uint8(pin)
 
@@ -195,7 +188,7 @@ func WritePin(pin Pin, state State) {
 	memlock.Lock()
 	defer memlock.Unlock()
 
-	if state == Low {
+	if state == false {
 		mem[clearReg] = 1 << (p & 31)
 	} else {
 		mem[setReg] = 1 << (p & 31)
@@ -204,24 +197,24 @@ func WritePin(pin Pin, state State) {
 }
 
 // Read the state of a pin
-func ReadPin(pin Pin) State {
+func ReadPin(pin Pin) bool {
 	// Input level register offset (13 / 14 depending on bank)
 	levelReg := uint8(pin)/32 + 13
 
 	if (mem[levelReg] & (1 << uint8(pin))) != 0 {
-		return High
+		return true
 	}
 
-	return Low
+	return false
 }
 
 // Toggle a pin state (high -> low -> high)
 // TODO: probably possible to do this much faster without read
 func TogglePin(pin Pin) {
 	switch ReadPin(pin) {
-	case Low:
+	case false:
 		pin.High()
-	case High:
+	case true:
 		pin.Low()
 	}
 }
